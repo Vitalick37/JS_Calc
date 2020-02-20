@@ -1,6 +1,8 @@
 window.addEventListener('DOMContentLoaded', function () {
     'use strict'
 
+    const DAY_STRING = ['день', 'дня', 'дней'];
+
     const DATA = {
         whichSite: ['landing', 'multiPage', 'onlineStore'],
         price: [4000, 8000, 26000],
@@ -26,7 +28,26 @@ window.addEventListener('DOMContentLoaded', function () {
         total = document.querySelector('.total'),
         fastRange = document.querySelector('.fast-range'),
         totalPriceSum = document.querySelector('.total_price__sum'),
-        mainForm = document.querySelector('.main-form');
+        mainForm = document.querySelector('.main-form'),
+        typeSite = document.querySelector('.type-site'),
+        maxDeadline = document.querySelector('.max-deadline'),
+        rangeDeadline = document.querySelector('.range-deadline'),
+        deadlineValue = document.querySelector('.deadline-value'),
+        adaptValue = document.querySelector('.adapt_value'),
+        desktopTemplatesValue = document.querySelector('.desktopTemplates_value'),
+        mobileTemplatesValue = document.querySelector('.mobileTemplates_value'),
+        editableValue = document.querySelector('.editable_value'),
+        adapt = document.getElementById('adapt'),
+        desktopTemplates = document.getElementById('desktopTemplates'),
+        editable = document.getElementById('editable'),
+        mobileTemplates = document.getElementById('mobileTemplates');
+
+    // возвращает  склоняемое слово
+    function declOfNum(n, titles) {
+        return n + ' ' + titles[n % 10 === 1 && n % 100 !== 11 ?
+            0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2];
+    }
+    // ##############################################################################################
 
     function showElem(elem) {
         elem.style.display = 'block';
@@ -36,17 +57,35 @@ window.addEventListener('DOMContentLoaded', function () {
         elem.style.display = 'none';
     };
 
-    if (adapt.checked) {
-        mobileTemplates.disabled = false;  
-    } else if (!adapt.checked) {
-        mobileTemplates.disabled = true;   
+    function rendertextContent(total, site, maxDay, minDay) {
+        // динамическая запись типа сайта
+        typeSite.textContent = site;
+        // ##############################################################################################
+
+        // запись суммы
+        totalPriceSum.textContent = total;
+        // ##############################################################################################
+
+        // запись количества дней на разработку сайта в тексе
+        maxDeadline.textContent = declOfNum(maxDay, DAY_STRING);
+        // ##############################################################################################
+
+        rangeDeadline.min = minDay;
+        rangeDeadline.max = maxDay;
+
+        deadlineValue.textContent = declOfNum(rangeDeadline.value, DAY_STRING);
     };
-        
+
+
 
     function priceCalculation(elem) {
         let result = 0,
             index = 0,
-            options = [];
+            options = [],
+            site = '',
+            maxDeadLineDay = DATA.deadlineDay[index][1],
+            minDeadLineDay = DATA.deadlineDay[index][0];
+
         // сброс чекбоксов при смене типа сайта
         if (elem.name === 'whichSite') {
             for (const item of formCalculate.elements) {
@@ -62,6 +101,15 @@ window.addEventListener('DOMContentLoaded', function () {
         for (const item of formCalculate.elements) {
             if (item.name === 'whichSite' && item.checked) {
                 index = DATA.whichSite.indexOf(item.value);
+                // ##############################################################################################
+
+                // тип сайта в тексте
+                site = item.dataset.site;
+                // ##############################################################################################
+
+                // количество дней на разработку сайта в тексе
+                maxDeadLineDay = DATA.deadlineDay[index][1];
+                minDeadLineDay = DATA.deadlineDay[index][0];
                 // ##############################################################################################
 
                 // создание массива выбранных чекбоксов
@@ -91,13 +139,48 @@ window.addEventListener('DOMContentLoaded', function () {
         // подсчет суммы в зависимости от типа сайта(передача индекса)
         result += DATA.price[index];
         // ##############################################################################################
+        rendertextContent(result, site, maxDeadLineDay, minDeadLineDay);
 
-        // запись суммы
-        totalPriceSum.textContent = result;
-        // ##############################################################################################
     };
 
     function handlerCallBackForm(event) {
+
+        // чекбокс не активен и активируется только после включения другого чекбокса. При выключении второго чекбокса первый тоже выключается и становится неактивен.
+        if (adapt.checked) {
+            mobileTemplates.disabled = false;
+        } else {
+            mobileTemplates.disabled = true;
+            mobileTemplates.checked = false;
+        };
+        // ##############################################################################################
+
+        // ДЗ lesson_3 Наверное можно записать короче, но я не придумал как. 
+        // И ещё почему-то при первом checked на любой элемент его значение не меняется. Далее все работает норм.
+        function selectCheck (select, selectValue) {
+            if (select.checked) {
+                selectValue.textContent = 'Да';
+            } else {
+                selectValue.textContent = 'Нет';
+            };
+        };
+
+        adapt.addEventListener('change', () => {
+            selectCheck(adapt, adaptValue)
+        });
+        desktopTemplates.addEventListener('change', () => {
+            selectCheck(desktopTemplates, desktopTemplatesValue)
+        });
+        mobileTemplates.addEventListener('change', () => {
+            selectCheck(mobileTemplates, mobileTemplatesValue)
+        });
+        editable.addEventListener('change', () => {
+            selectCheck(editable, editableValue)
+        });
+
+ // ##############################################################################################
+
+
+
         // функция чекбокса "хочу быстрее"
         const target = event.target;
         if (target.classList.contains('want-faster')) {
